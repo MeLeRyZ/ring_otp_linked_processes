@@ -1,0 +1,22 @@
+========================================
+=== Linked, bidirectional, processes ===
+1. Note that if a normal process is linked to a process that just exited normally
+(with :normal as the reason), the former process is not terminated;
+
+2. spawn_link/3 does the
+spawning and linking in one atomic operation. Why is this important? Because when
+link/1 is given a process that has terminated or doesn’t exist, it throws an error.
+spawn/3 and link/1 are two separate steps, so spawn/3 could fail, causing the subse-
+quent call to link/1 to raise an exception.;
+
+3. trap_door works if `Process.exit(self, :whoops)`
+    DON'T work if `Process.exit(self, :kill)`
+
+4. Check the trap door with linked processes:
+    [p1, p2, p3] = Ring.create_processes(3)
+    blablabla
+    iex> send(p1, :trap_exit)
+    iex> send(p2, :trap_exit)
+    Process.exit(p2, :kill)
+    iex> [p1, p2, p3] |> Enum.map(fn p -> Process.alive?(p) end)
+    [true, false, false]
